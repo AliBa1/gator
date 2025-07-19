@@ -31,15 +31,11 @@ func NewCommands() commands {
 	}
 	commands.register("login", handlerLogin)
 	commands.register("register", handlerRegister)
+	commands.register("reset", handlerReset)
+	commands.register("users", handlerUsers)
 
 	return commands
 }
-
-// func CommandsMap() map[string]func(*State, Command) error {
-// 	commands := make(map[string]func(*State, Command) error)
-// 	commands["login"] = handlerLogin
-// 	return commands
-// }
 
 func (c *commands) Run(s *state, cmd command) error {
 	handlerFunc, ok := c.commands[cmd.name]
@@ -99,6 +95,28 @@ func handlerRegister(s *state, cmd command) error {
 	s.config.CurrentUserName = user.Name
 	fmt.Println("The user has been registered")
 	s.config.Print()
+
+	return nil
+}
+
+func handlerReset(s *state, cmd command) error {
+	err := s.database.DeleteUsers(context.Background())
+	return err
+}
+
+func handlerUsers(s *state, cmd command) error {
+	users, err := s.database.GetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, user := range users {
+		fmt.Printf("* %s", user.Name)
+		if s.config.CurrentUserName == user.Name {
+			fmt.Printf(" (current)")
+		}
+		fmt.Printf("\n")
+	}
 
 	return nil
 }
