@@ -80,3 +80,55 @@ func handlerUsers(s *state, cmd command) error {
 
 	return nil
 }
+
+func handlerAgg(s *state, cmd command) error {
+	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if err != nil {
+		return nil
+	}
+
+	fmt.Printf("feed: %v\n", feed)
+	return nil
+}
+
+func handlerAddFeed(s *state, cmd command) error {
+	if len(cmd.args) < 2 {
+		return errors.New("the register handler expects two arguments, the feed name and the url")
+	}
+
+	feedName := cmd.args[0]
+	url := cmd.args[1]
+	user, err := s.database.GetUser(context.Background(), s.config.CurrentUserName)
+	if err != nil {
+		return err
+	}
+
+	feed := database.CreateFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      feedName,
+		Url:       url,
+		UserID:    user.ID,
+	}
+	_, err = s.database.CreateFeed(context.Background(), feed)
+	return err
+
+}
+
+func handlerFeeds(s *state, cmd command) error {
+	feeds, err := s.database.GetFeeds(context.Background())
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Feeds")
+	fmt.Println("---------------")
+	for _, feed := range feeds {
+		fmt.Println("Name:", feed.Name)
+		fmt.Println("URL:", feed.Url)
+		fmt.Println("User:", feed.Username)
+	}
+	fmt.Println()
+	return nil
+}
