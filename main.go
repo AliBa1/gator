@@ -1,10 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
 	"github.com/AliBa1/gator/internal/config"
+	"github.com/AliBa1/gator/internal/database"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -14,10 +17,19 @@ func main() {
 		return
 	}
 
-	state := config.State{
-		Config: &c,
+	state := state{
+		config: &c,
 	}
-	commands := config.NewCommands()
+	commands := NewCommands()
+
+	db, err := sql.Open("postgres", state.config.DbURL)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+		return
+	}
+	dbQueries := database.New(db)
+	state.database = dbQueries
 
 	if len(os.Args) < 2 {
 		fmt.Printf("Enter a command to use the app")
@@ -33,9 +45,9 @@ func main() {
 		args = os.Args[2:]
 	}
 
-	command := config.Command{
-		Name: userCommandName,
-		Args: args,
+	command := command{
+		name: userCommandName,
+		args: args,
 	}
 	err = commands.Run(&state, command)
 	if err != nil {
@@ -50,10 +62,10 @@ func main() {
 	// 	return
 	// }
 	//
-	c, err = config.Read()
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	c.Print()
+	// c, err = config.Read()
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	return
+	// }
+	// c.Print()
 }
