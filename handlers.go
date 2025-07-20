@@ -93,7 +93,7 @@ func handlerAgg(s *state, cmd command) error {
 
 func handlerAddFeed(s *state, cmd command) error {
 	if len(cmd.args) < 2 {
-		return errors.New("the register handler expects two arguments, the feed name and the url")
+		return errors.New("the add feed handler expects two arguments, the feed name and the url")
 	}
 
 	feedName := cmd.args[0]
@@ -103,7 +103,7 @@ func handlerAddFeed(s *state, cmd command) error {
 		return err
 	}
 
-	feed := database.CreateFeedParams{
+	feedParams := database.CreateFeedParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -111,7 +111,19 @@ func handlerAddFeed(s *state, cmd command) error {
 		Url:       url,
 		UserID:    user.ID,
 	}
-	_, err = s.database.CreateFeed(context.Background(), feed)
+	feed, err := s.database.CreateFeed(context.Background(), feedParams)
+	if err != nil {
+		return err
+	}
+
+	feedFollowParams := database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UserID:    user.ID,
+		FeedID:    feed.ID,
+	}
+	_, err = s.database.CreateFeedFollow(context.Background(), feedFollowParams)
 	return err
 
 }
@@ -128,6 +140,53 @@ func handlerFeeds(s *state, cmd command) error {
 		fmt.Println("Name:", feed.Name)
 		fmt.Println("URL:", feed.Url)
 		fmt.Println("User:", feed.Username)
+	}
+	fmt.Println()
+	return nil
+}
+
+func handlerFollow(s *state, cmd command) error {
+	if len(cmd.args) < 1 {
+		return errors.New("the follow handler expects one argument, the url")
+	}
+
+	user, err := s.database.GetUser(context.Background(), s.config.CurrentUserName)
+	if err != nil {
+		return err
+	}
+
+	url := cmd.args[0]
+	feed, err := s.database.GetFeedByUrl(context.Background(), url)
+	if err != nil {
+		return err
+	}
+
+	feedFollowParams := database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UserID:    user.ID,
+		FeedID:    feed.ID,
+	}
+	_, err = s.database.CreateFeedFollow(context.Background(), feedFollowParams)
+	return err
+}
+
+func handlerFollowing(s *state, cmd command) error {
+	user, err := s.database.GetUser(context.Background(), s.config.CurrentUserName)
+	if err != nil {
+		return err
+	}
+
+	feeds, err := s.database.GetFeedFollowsForUser(context.Background(), user.ID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Feeds Your Following")
+	fmt.Println("---------------")
+	for _, feed := range feeds {
+		fmt.Println(feed.FeedName)
 	}
 	fmt.Println()
 	return nil

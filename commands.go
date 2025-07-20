@@ -32,6 +32,8 @@ func NewCommands() commands {
 	commands.register("agg", handlerAgg)
 	commands.register("addfeed", handlerAddFeed)
 	commands.register("feeds", handlerFeeds)
+	commands.register("follow", handlerFollow)
+	commands.register("following", handlerFollowing)
 
 	return commands
 }
