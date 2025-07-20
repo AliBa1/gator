@@ -82,13 +82,20 @@ func handlerUsers(s *state, cmd command) error {
 }
 
 func handlerAgg(s *state, cmd command) error {
-	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
-	if err != nil {
-		return nil
+	if len(cmd.args) < 1 {
+		return errors.New("the agg handler expects one argument, time between requests (ex: 1s, 1m, 1h)")
 	}
 
-	fmt.Printf("feed: %v\n", feed)
-	return nil
+	timeBetweenRequests, err := time.ParseDuration(cmd.args[0])
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Collecting feeds every", timeBetweenRequests.String())
+	ticker := time.NewTicker(timeBetweenRequests)
+	for ; ; <-ticker.C {
+		scrapeFeeds(s)
+	}
 }
 
 func handlerAddFeed(s *state, cmd command, user database.User) error {
