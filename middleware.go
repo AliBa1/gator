@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/AliBa1/gator/internal/database"
 )
@@ -10,6 +11,7 @@ func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) 
 	return func(s *state, cmd command) error {
 		user, err := s.database.GetUser(context.Background(), s.config.CurrentUserName)
 		if err != nil {
+			fmt.Println("error logging in user")
 			return err
 		}
 		return handler(s, cmd, user)

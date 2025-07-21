@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/AliBa1/gator/internal/database"
@@ -116,6 +117,7 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 	}
 	feed, err := s.database.CreateFeed(context.Background(), feedParams)
 	if err != nil {
+		fmt.Println("problem creating feed")
 		return err
 	}
 
@@ -127,8 +129,12 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 		FeedID:    feed.ID,
 	}
 	_, err = s.database.CreateFeedFollow(context.Background(), feedFollowParams)
-	return err
+	if err != nil {
+		fmt.Println("problem following the feed")
+		return err
+	}
 
+	return nil
 }
 
 func handlerFeeds(s *state, cmd command) error {
@@ -199,6 +205,42 @@ func handlerUnfollow(s *state, cmd command, user database.User) error {
 	err := s.database.DeleteFeedFollow(context.Background(), deleteFeedFollowParams)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	limit := 2
+	var err error
+	if len(cmd.args) > 0 {
+		limit, err = strconv.Atoi(cmd.args[0])
+		if err != nil {
+			limit = 2
+		}
+	}
+
+	getPostsForUserParams := database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  int32(limit),
+	}
+	posts, err := s.database.GetPostsForUser(context.Background(), getPostsForUserParams)
+	if err != nil {
+		fmt.Println("something went wrong getting your posts")
+		return err
+	}
+
+	if len(posts) < 1 {
+		fmt.Println("you don't have any saved posts!")
+		fmt.Println("use the agg command to scrape posts first")
+		return nil
+	}
+
+	for _, post := range posts {
+		fmt.Printf("%s (%s)\n", post.Title, post.Url)
+		fmt.Printf("%s\n", post.PublishedAt)
+		fmt.Printf("%s\n", post.Description)
+		fmt.Printf("\n")
 	}
 
 	return nil

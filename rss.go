@@ -7,6 +7,10 @@ import (
 	"html"
 	"io"
 	"net/http"
+	"time"
+
+	"github.com/AliBa1/gator/internal/database"
+	"github.com/google/uuid"
 )
 
 type RSSFeed struct {
@@ -30,10 +34,15 @@ func (f *RSSFeed) Print() {
 	fmt.Printf("Description: %s\n", f.Channel.Description)
 	fmt.Printf("Items:\n")
 	for _, item := range f.Channel.Item {
-		fmt.Printf("%s (%s)\n", item.Title, item.Link)
-		fmt.Printf("%s\n", item.PubDate)
-		fmt.Printf("%s\n", item.Description)
+		item.Print()
 	}
+	fmt.Println()
+}
+
+func (i *RSSItem) Print() {
+	fmt.Printf("%s (%s)\n", i.Title, i.Link)
+	fmt.Printf("%s\n", i.PubDate)
+	fmt.Printf("%s\n", i.Description)
 	fmt.Println()
 }
 
@@ -80,7 +89,26 @@ func scrapeFeeds(s *state) error {
 	if err != nil {
 		return err
 	}
-	feed.Print()
+	// feed.Print()
+
+	for _, post := range feed.Channel.Item {
+		publishDate, err := time.Parse(time.Layout, post.PubDate)
+		createPostParams := database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+			Title:       post.Title,
+			Url:         post.Link,
+			Description: post.Description,
+			PublishedAt: publishDate,
+			FeedID:      feedToFetch.ID,
+		}
+		_, err = s.database.CreatePost(context.Background(), createPostParams)
+		if err != nil {
+			fmt.Println("failed to save post:", post.Title)
+			return err
+		}
+	}
 
 	err = s.database.MarkFeedFetched(context.Background(), feedToFetch.ID)
 	if err != nil {
