@@ -51,17 +51,17 @@ gator browse [limit]
 
 ### All Commands
 
-`login <username>` - login to a user
-`register <username>` - create a user account
-`reset` - reset the entire database
-`users` - view all registered users
-`agg <time_between_requests>` - scrape from list of added feeds
-`addfeed <name> <url>` - add a feed to list of feeds to aggragate
-`feeds` - view a list of added feeds
-`follow <url>` - follow a feed
-`following` - view a list of followed feeds
-`unfollow <url>` - unfollow a feed
-`browse [limit]` - view aggragated posts
+- `login <username>` - login to a user
+- `register <username>` - create a user account
+- `reset` - reset the entire database
+- `users` - view all registered users
+- `agg <time_between_requests>` - scrape from list of added feeds
+- `addfeed <name> <url>` - add a feed to list of feeds to aggragate
+- `feeds` - view a list of added feeds
+- `follow <url>` - follow a feed
+- `following` - view a list of followed feeds
+- `unfollow <url>` - unfollow a feed
+- `browse [limit]` - view aggragated posts
 
 ## Tools Used
 
